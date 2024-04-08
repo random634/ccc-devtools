@@ -34,15 +34,22 @@
                             <div id="sceneIsEmpty" class="inner"><%=tip_sceneIsEmpty%></div>
                         </div>
                         <div class="error" id="error">
+                            <input id="error-copy" type="button" value="点击复制" style="
+                                position: absolute;
+                                top: 9;
+                                right: 50px;
+                            ">
+                            <button id="error-close" style="position: absolute;top: 10;right: 10;">X</button>
                             <div class="title">Error <i>(Please open the console to see detailed errors)</i></div>
                             <div class="error-main"></div>
-                            <div class="error-stack"></div>
+                            <div id="error-stack" class="error-stack"></div>
+                            <textarea id="error-stack-input" style="display: flex;width: 1;height: 1;top: 0;position: absolute;left: 0;"></textarea>
                         </div>
                     </div>
                 </div>
-                <p class="footer">
+                <!-- <p class="footer">
                     Created with <a href="https://www.cocos.com/products" target="_blank" title="Cocos Creator">Cocos Creator</a>
-                </p>
+                </p> -->
             </div>
         </div>
         <%- include(cocosTemplate, {}) %>
@@ -72,4 +79,49 @@
             localStorage.removeItem('ccc_devtools_show');
         }
     }
+
+    const toolbar = document.getElementsByClassName('toolbar');
+    toolbar[0].insertAdjacentHTML('afterbegin', '<div><button id="btn-refresh">检查刷新</button></div>');
+    toolbar[0].insertAdjacentHTML('afterbegin', '<div><button id="btn-cache">缓存资源</button></div>');
+
+    // refresh btn
+    const refreshBtn = document.getElementById('btn-refresh');
+    refreshBtn.addEventListener('click', () => {
+        var currentProtocol = window.location.protocol;
+        var currentDomain = window.location.hostname;
+        var currentPort = window.location.port;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', currentProtocol + '//' + currentDomain + ':' + currentPort + '/asset-db/refresh');
+        xhr.send();
+    }, false);
+
+    // cache btn
+    const cacheBtn = document.getElementById('btn-cache');
+    cacheBtn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('openCacheDialog'));
+    }, false);
+
+    // show fps
+    const showFPSBtn = document.getElementById('btn-show-fps');
+    showFPSBtn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('showProfiler', { detail: { show: true } }));
+    }, false);
+
+    const closeErrorBtn = document.getElementById('error-close');
+    closeErrorBtn.addEventListener('click', () => {
+        const errPanel = document.getElementById('error');
+        errPanel.style.display = 'none';
+    }, false);
+
+    const copyErrorBtn = document.getElementById('error-copy');
+    copyErrorBtn.addEventListener('click', () => {
+        const text = document.getElementById("error-stack").innerHTML;
+        console.log(text)
+        const input = document.getElementById("error-stack-input");
+        input.value = text;
+        input.select();
+        document.execCommand("copy");
+    }, false);
+
+    globalThis.PREVIEW_TEMPLATE = true;
 </script>
