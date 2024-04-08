@@ -18,8 +18,60 @@ export class ComponentManager {
             case 'cc.Sprite':
                 return new CCSpriteModel();
             default:
-                return null
+                return new CCCommonModel(name, componentGetter);
         }
+    }
+
+    static getUserViewModel(name: string, componentGetter: any) {
+        return new UserModel(name, componentGetter);
+    }
+}
+
+const classNamePropMap: Record<string, {name:string, key:string, custom: boolean}[]> = {
+    
+}
+
+const getPropList = (name: string, _: any) => {
+    let props = classNamePropMap[name];
+    if (props) {
+        return props;
+    }
+
+    props = [];
+
+    // todo
+    // const component = componentGetter();
+    // for (const key in component) {
+    //     console.log("hhhhhh", name, key);
+    //     if (Object.prototype.hasOwnProperty.call(component, key)) {
+  
+    //     }
+    // }
+
+
+    classNamePropMap[name] = props;
+
+    return props;
+}
+
+class UserModel implements IComponentViewModel {
+
+    props: IComponentProp[];
+
+    constructor(name: string, componentGetter: any) {
+   
+        this.props = getPropList(name, componentGetter);
+    }
+}
+
+
+class CCCommonModel implements IComponentViewModel {
+
+    props: IComponentProp[];
+
+    constructor(name: string, componentGetter: any) {
+   
+        this.props = getPropList(name, componentGetter);
     }
 }
 

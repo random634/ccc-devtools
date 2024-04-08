@@ -1,4 +1,7 @@
 <template>
+  <CacheDialog 
+    :cache-args="cacheArgs"
+  ></CacheDialog>
   <div style="width: 100%;" :style="{ height: treeViewHeight }">
     <el-tree-v2 ref="treeView" :props="defaultProps" empty-text="正在加载场景" :highlight-current="true"
       :expand-on-click-node="false" :default-expanded-keys="expandedKeys" @current-change="handleCurrentNodeChange"
@@ -26,12 +29,13 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted } from 'vue';
+
 import { ref } from 'vue-demi';
 import CCNode from './CCNode.vue';
-import Utils from '../misc/Utils';
+import Utils, { ICacheArgs } from '../misc/Utils';
 import CCComponent from './CCComponent.vue';
 import UserComponent from './UserComponent.vue';
+import CacheDialog from './CacheDialog.vue';
 
 const props = defineProps({
   show: Boolean,
@@ -55,12 +59,34 @@ const defaultProps = {
   children: 'children',
 };
 
+
+let cacheArgs = ref<ICacheArgs>({
+  cacheDialog: false,
+  cacheTitle: '',
+  cacheData: [],
+  cacheOnlyTexture: true,
+  cacheSearchText: '',
+});
+
 const treeViewHeight = (window.innerHeight - 120) / 2;
 const treeView = ref(null);
 
-onMounted(() => {
-  console.log('ccc-devtools init');
+window.addEventListener('openCacheDialog', (_: any) => {
+  openCacheDialog();
 });
+
+
+function openCacheDialog() {
+  const isVisible = !cacheArgs.value.cacheDialog;
+  if (isVisible) {
+    const data = Utils.getCache();
+    const cacheRawData = data.cacheData;
+    cacheArgs.value.cacheTitle = data.cacheTile;
+    cacheArgs.value.cacheData = cacheRawData;
+  }
+
+  cacheArgs.value.cacheDialog = isVisible
+}
 
 function getChildByUuidPath(node: any, path: string[], index: number): any {
   if (index >= path.length) {
@@ -123,13 +149,10 @@ function init() {
   refreshTree();
 }
 
-const intervalId = setInterval(() => {
-  // @ts-ignore
-  if (window['cc'] && cc.director.getScene()) {
-    init();
-    clearInterval(intervalId);
-  }
-}, 1000);
+window.addEventListener('cccDevtoolsInit', (_: any) => {
+  console.log('ccc-devtools init');
+  init();
+});
 
 </script>
 

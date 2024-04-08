@@ -14,9 +14,9 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue-demi';
 
-const props = defineProps({
-    show: Boolean,
-});
+// const props = defineProps({
+//     show: Boolean,
+// });
 
 let items = ref<any[]>([]);
 
@@ -24,6 +24,7 @@ function refresh() {
     // @ts-ignore
     const cc = window['cc'];
     if (!cc || !cc.profiler || !cc.profiler._stats) {
+        setTimeout(refresh, 1000);
         return;
     }
     // @ts-ignore
