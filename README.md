@@ -13,7 +13,12 @@ ccc-devtools 是一款用于 Cocos Creator 网页端预览的调试工具，可�
 - 主干分支添加回2.x版本的缓存查看功能（左上角按钮）
 - 修复profile信息显示功能，优化profile信息显示时机
 - 增加检查刷新按钮（左上角按钮，如果代码有修改，保存之后点检查刷新即可，不用激活编辑器）
-
+- 增加高亮节点并展开树节点对应位置api，项目代码侧调用如下代码即可，node为ccNode节点
+``` typescript
+    // 例子
+    const event = new CustomEvent('cccDevtoolsFocusNode', { detail: node });
+    globalThis.window.dispatchEvent(event);
+```
 
 ## 使用
 
