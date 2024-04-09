@@ -1,9 +1,9 @@
 <template>
     <div class="row">
         <el-checkbox v-model="ccNode!.active" size="small" style="margin-right: 10px;" />
-        <span class="header-title" style="flex: 1;">Node</span>
-        <el-button size="small" @click="Utils.drawNodeRect(ccNode)">+</el-button>
-        <el-button size="small" @click="Utils.outputToConsole(ccNode)">></el-button>
+        <span class="header-title" style="flex: 1;">cc.Node</span>
+        <el-button size="small" @click="Utils.drawNodeRect(ccNode)">高亮+</el-button>
+        <el-button size="small" @click="Utils.outputToConsole(ccNode)">打印></el-button>
     </div>
     <template v-if="ccNode!.name != 'PROFILER_NODE'">
         <PropItem v-for="prop in NodeModel.props" :key="prop.key" :model="NodeModel" :prop-name="prop.name"
