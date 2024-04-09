@@ -69,7 +69,7 @@ let cacheArgs = ref<ICacheArgs>({
 });
 
 const treeViewHeight = (window.innerHeight - 120) / 2;
-const treeView = ref(null);
+const treeView = ref(null) as any;
 
 window.addEventListener('openCacheDialog', (_: any) => {
   openCacheDialog();
@@ -139,7 +139,7 @@ function refreshTree() {
     let value: TreeNode[] = [];
     //@ts-ignore
     setChildren(value, cc.director.getScene().children, []);
-    (treeView.value as any).setData(value);
+    treeView.value!.setData(value);
     updateKey.value = -updateKey.value;
   }
   window.requestAnimationFrame(refreshTree);
@@ -152,6 +152,39 @@ function init() {
 window.addEventListener('cccDevtoolsInit', (_: any) => {
   console.log('ccc-devtools init');
   init();
+});
+
+const getUuid = (node: any, func: (uuid: string) => void) => {
+  if (node.parent) {
+    getUuid(node.parent, func);
+  }else{
+    // 没有parent就是scene了，直接返回
+    return;
+  }
+
+  if (node.uuid) {
+    func(node.uuid);
+  }
+};
+
+window.addEventListener('cccDevtoolsFocusNode', (data: any) => {
+  const node = data.detail;
+  const key = node.uuid;
+  const tree = treeView.value!;
+  const treeNode = tree.getNode(key);
+  if (!treeNode) {
+    return;
+  }
+
+  getUuid(node.parent, (nodeUuid: string) => {
+    expandedNodeMap.set(nodeUuid, true);
+  });
+
+  expandedKeys = [...expandedNodeMap.keys()];
+
+  tree.setExpandedKeys(expandedKeys);
+  tree.setCurrentKey(key);
+  handleCurrentNodeChange(treeNode.data);
 });
 
 </script>
