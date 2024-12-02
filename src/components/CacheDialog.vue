@@ -45,7 +45,7 @@ props.cacheArgs.cacheData.filter(
     (data) => {
         const isTextureOnly = props.cacheArgs.cacheOnlyTexture;
         if (isTextureOnly) {
-            const isTexture = data.type === 'cc.Texture2D';
+            const isTexture = data.type === 'cc.Texture2D' || data.type === 'cc.ImageAsset';
             if (!isTexture) {
                 return false;
             }

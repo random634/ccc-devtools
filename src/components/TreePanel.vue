@@ -2,10 +2,11 @@
   <CacheDialog 
     :cache-args="cacheArgs"
   ></CacheDialog>
+  <el-input v-model="filterText" style="width: 100%; height: 40px;" placeholder="Search Node" @input="onFilterChanged"/>
   <div style="width: 100%;" :style="{ height: treeViewHeight }">
-    <el-tree-v2 ref="treeView" :props="defaultProps" empty-text="正在加载场景" :highlight-current="true"
+    <el-tree-v2 ref="treeView" :props="defaultProps" empty-text="No Node" :highlight-current="true"
       :expand-on-click-node="false" :default-expanded-keys="expandedKeys" @current-change="handleCurrentNodeChange"
-      @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse" :height="treeViewHeight">
+      @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse" :height="treeViewHeight" :filter-method="filterNode">
       <template #default="{ node }">
         <span :class="{ 'node-hide': !node.data.active }">{{ node.label }}</span>
       </template>
@@ -68,8 +69,9 @@ let cacheArgs = ref<ICacheArgs>({
   cacheSearchText: '',
 });
 
-const treeViewHeight = (window.innerHeight - 120) / 2;
+const treeViewHeight = (window.innerHeight - 120 - 50) / 2;
 const treeView = ref(null) as any;
+const filterText = ref('');
 
 window.addEventListener('openCacheDialog', (_: any) => {
   openCacheDialog();
@@ -79,13 +81,13 @@ window.addEventListener('openCacheDialog', (_: any) => {
 function openCacheDialog() {
   const isVisible = !cacheArgs.value.cacheDialog;
   if (isVisible) {
-    const data = Utils.getCache();
-    const cacheRawData = data.cacheData;
-    cacheArgs.value.cacheTitle = data.cacheTile;
-    cacheArgs.value.cacheData = cacheRawData;
+    Utils.getTextureCache((result) => {
+        cacheArgs.value.cacheTitle = result.cacheTile;
+        cacheArgs.value.cacheData = result.cacheData;
+    });
   }
 
-  cacheArgs.value.cacheDialog = isVisible
+  cacheArgs.value.cacheDialog = isVisible;
 }
 
 function getChildByUuidPath(node: any, path: string[], index: number): any {
@@ -136,10 +138,10 @@ function setChildren(container: TreeNode[], children: any[], path: string[]) {
 function refreshTree() {
   // @ts-ignore
   if (props.show && window.ccdevShow) {
-    let value: TreeNode[] = [];
+    let nodes: TreeNode[] = [];
     //@ts-ignore
-    setChildren(value, cc.director.getScene().children, []);
-    treeView.value!.setData(value);
+    setChildren(nodes, cc.director.getScene().children, []);
+    treeView.value!.setData(nodes);
     updateKey.value = -updateKey.value;
   }
   window.requestAnimationFrame(refreshTree);
@@ -147,6 +149,23 @@ function refreshTree() {
 
 function init() {
   refreshTree();
+}
+
+function filterNode(value: string, node: TreeNode) {
+  if (!value) return true;
+  let nameOrigin = node.name.toLowerCase();
+  return nameOrigin.includes(value.toLowerCase());
+}
+
+function onFilterChanged(value: string) {
+  treeView.value!.filter(value);
+
+  if (!value) {
+    expandedNodeMap.clear();
+    expandedKeys = [];
+    const tree = treeView.value!;
+    tree.setExpandedKeys(expandedKeys);
+  }
 }
 
 window.addEventListener('cccDevtoolsInit', (_: any) => {

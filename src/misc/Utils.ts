@@ -1,13 +1,21 @@
 // eslint-disable-next-line init-declarations
 declare const cc: any;
 
+export interface ICacheItem {
+    type: string;
+    name: string;
+    preview: string;
+    id: string;
+    size: number;
+}
+
 export interface ICacheArgs {
     cacheDialog: boolean;
     cacheTitle: string;
-    cacheData: {type: string, name:string, preview:string, id:string, size:number}[];
+    cacheData: ICacheItem[];
     cacheOnlyTexture: boolean;
     cacheSearchText: string;
-  }
+}
 
 export default class Utils {
 
@@ -103,57 +111,50 @@ export default class Utils {
         }
     }
 
-    public static getCache(): {cacheTile: string, cacheData: {type: string, name:string, preview:string, id:string, size:number}[]} {
-        let rawCacheData = cc.assetManager.assets._map;
-        let cacheData = [];
-        let totalTextureSize = 0;
-        for (let k in rawCacheData) {
-            let item = rawCacheData[k];
-            if (item.type !== 'js' && item.type !== 'json') {
-                let itemName = '_';
-                let preview = '';
-                let content = item.__classname__;
-                let formatSize = -1;
-                if (item.type === 'png' || item.type === 'jpg') {
-                    let texture = rawCacheData[k.replace('.' + item.type, '.json')];
-                    if (texture && texture._owner && texture._owner._name) {
-                        itemName = texture._owner._name;
-                        preview = texture.content.url;
-                    }
-                } else {
-                    if (item.name) {
-                        itemName = item.name;
-                    } else if (item._owner) {
-                        itemName = (item._owner && item._owner.name) || '_';
-                    }
-                    if (content === 'cc.Texture2D') {
-                        item = item.image;
-                        preview = item.nativeUrl;
-                        let textureSize = item.width * item.height * ((item._native === '.jpg' ? 3 : 4) / 1024 / 1024);
-                        totalTextureSize += textureSize;
-                        // sizeStr = textureSize.toFixed(3) + 'M';
-                        formatSize = Math.round(textureSize * 1000) / 1000;
-                    } else if (content === 'cc.SpriteFrame') {
-                        preview = item._texture.nativeUrl;
-                    }
+    public static getTextureCache(cb: (result: {cacheTile: string, cacheData: ICacheItem[]}) => void) {
+        let cacheMap = cc.assetManager.assets.map;
+        let uuidList = [];
+        let textureMap: any = {};
+        for (let uuid in cacheMap) {
+            let item = cacheMap[uuid];
+            if (item.__classname__ == "cc.Texture2D") {
+                let uuidImg = uuid.split("@")[0];
+                if (textureMap[uuidImg] == null) {
+                    textureMap[uuidImg] = true;
+                    uuidList.push(uuidImg);
                 }
+                textureMap[uuidImg] = item;
+            }
+        }
 
-                if (preview.length > 0) {
-                    preview = window.location.protocol + '//' + window.location.host + '/' +preview
-                }
+        cc.assetManager.loadAny(uuidList, (err: any, assets: any[]) => {
+            if (err) {
+                console.error(err);
+                cb({ cacheTile: '加载失败', cacheData: [] });
+                return;
+            }
+
+            let totalTextureSize = 0;
+            let cacheData: ICacheItem[] = [];
+
+            for (let i = 0; i < assets.length; i++) {
+                let texture = assets[i];
+                let textureSize = texture.width * texture.height * ((texture._native === '.jpg' ? 3 : 4) / 1024 / 1024);
+                let formatSize = Math.round(textureSize * 1000) / 1000;
+                totalTextureSize += textureSize;
 
                 cacheData.push({
-                    queueId: item.queueId,
-                    type: content,
-                    name: itemName,
-                    preview: preview,
-                    id: item._uuid,
+                    type: texture.__classname__,
+                    name: texture.name,
+                    preview: window.location.protocol + '//' + window.location.host + '/' + texture.nativeUrl,
+                    id: texture.uuid,
                     size: formatSize
                 });
             }
-        }
-        let cacheTitle = `缓存 [文件总数:${cacheData.length}][纹理缓存:${totalTextureSize.toFixed(2) + 'M'}]`;
-        return {cacheTile: cacheTitle, cacheData: cacheData};
+
+            let cacheTitle = `纹理缓存 [总个数:${cacheData.length}][总大小:${totalTextureSize.toFixed(2) + 'M'}]`;
+            cb({ cacheTile: cacheTitle, cacheData: cacheData });
+        });
     }
 
 }
